@@ -57,7 +57,6 @@ public class ChatGPTController {
     }
 
 
-
     @GetMapping("/chat1")
     public List<Choice> chatWithGPT1(@RequestParam String message) {
         ChatRequest chatRequest = new ChatRequest();
@@ -74,6 +73,7 @@ public class ChatGPTController {
 
         ChatResponse response = webClient.post()
                 .contentType(MediaType.APPLICATION_JSON)
+                .headers(h-> h.setBearerAuth("NotTheRealKey"))
                 .bodyValue(chatRequest)
                 .retrieve()
                 .bodyToMono(ChatResponse.class)
@@ -84,8 +84,7 @@ public class ChatGPTController {
 
         return lst;
 
-
-
     }
+
 
 }
