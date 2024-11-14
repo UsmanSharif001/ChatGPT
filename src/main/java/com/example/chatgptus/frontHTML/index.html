@@ -3,14 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat with GPT</title>
+    <title>Trivia Game</title>
+    <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
-<h1>Chat with GPT</h1>
-<input type="text" id="userMessage" placeholder="Ask a question..." />
-<button onclick="sendMessage()">Send</button>
-<div id="response"></div>
+<h1>Trivia Game</h1>
+<div id="trivia-container">
+    <p id="question"></p>
+    <div id="choices-container"></div>
+    <button id="submit-btn" disabled>Submit Answer</button>
+    <p id="result"></p>
+</div>
 
+<!-- Link to your JavaScript file -->
 <script src="../frontJS/script.js"></script>
 </body>
 </html>

@@ -1,48 +1,94 @@
-async function sendMessage() {
-    const message = document.getElementById("userMessage").value;
-    const responseDiv = document.getElementById("response");
+document.addEventListener("DOMContentLoaded", function() {
+    const questionElem = document.getElementById("question");
+    const choicesContainer = document.getElementById("choices-container");
+    const submitButton = document.getElementById("submit-btn");
+    const resultElem = document.getElementById("result");
 
-    try {
-        let res;
-        let data;
+    let correctAnswer = ""; // Store the correct answer here
 
-        if (message.toLowerCase().includes("trivia")) {
-            // Fetch trivia question when user mentions "trivia"
-            res = await fetch(`http://localhost:8080/sportsTrivia`);
-            data = await res.json();
+    // Fetch trivia from backend
+    function fetchTrivia() {
+        console.log("Fetching trivia question from backend...");
+        fetch("http://localhost:8080/getTrivia?category=21") // Adjust category if needed
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Error fetching trivia");
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Trivia API Response:", data);
 
-            if (data.question) {
-                const question = data.question;
-                const answers = data.answers || [];
-                const correctAnswer = data.correctAnswer;
+                // Check if the required data exists
+                if (!data || !data.question || !data.correct_answer || !Array.isArray(data.answers)) {
+                    throw new Error("Trivia data is missing required fields");
+                }
 
-                // Display the trivia question and options
-                responseDiv.innerHTML = `<p><strong>Trivia Question:</strong> ${question}</p>`;
-                answers.forEach((answer, index) => {
-                    responseDiv.innerHTML += `<button onclick="checkAnswer('${answer}', '${correctAnswer}')">${answer}</button>`;
+                // Store the correct answer
+                correctAnswer = data.correct_answer;
+
+                // Display the question
+                questionElem.textContent = data.question;
+
+                // Clear previous choices
+                choicesContainer.innerHTML = "";
+
+                // Shuffle the answers array to randomize the options
+                const shuffledAnswers = data.answers.sort(() => Math.random() - 0.5);
+
+                // Display choices as radio buttons
+                shuffledAnswers.forEach((choice, index) => {
+                    const choiceElement = document.createElement("div");
+                    const radioButton = document.createElement("input");
+                    radioButton.type = "radio";
+                    radioButton.name = "answer";
+                    radioButton.value = choice;
+                    radioButton.id = `choice-${index}`;
+
+                    const label = document.createElement("label");
+                    label.setAttribute("for", `choice-${index}`);
+                    label.textContent = choice;
+
+                    choiceElement.appendChild(radioButton);
+                    choiceElement.appendChild(label);
+                    choicesContainer.appendChild(choiceElement);
                 });
+
+                // Enable the submit button
+                submitButton.disabled = false;
+            })
+            .catch(error => {
+                console.error("Error fetching trivia:", error);
+                resultElem.textContent = "Error fetching trivia.";
+            });
+    }
+
+    // Handle answer submission
+    submitButton.addEventListener("click", () => {
+        const selectedOption = document.querySelector('input[name="answer"]:checked');
+        if (selectedOption) {
+            const selectedAnswer = selectedOption.value;
+
+            // Check if the answer is correct
+            if (selectedAnswer === correctAnswer) {
+                resultElem.textContent = "Correct!";
             } else {
-                responseDiv.innerHTML = `<p>No trivia available. Try again later.</p>`;
+                resultElem.textContent = `Incorrect. The correct answer is: ${correctAnswer}`;
             }
         } else {
-            // Otherwise, call the regular chat API
-            res = await fetch(`http://localhost:8080/chat?message=${encodeURIComponent(message)}`);
-            data = await res.json();
-            const responseMessage = data.message || "No valid response from the system.";
-            responseDiv.innerHTML = `<p><strong>Response:</strong> ${responseMessage}</p>`;
+            resultElem.textContent = "Please select an answer!";
         }
-    } catch (error) {
-        console.error("Error:", error);
-        responseDiv.innerHTML = `<p style="color: red;">An error occurred: ${error.message}</p>`;
-    }
-}
 
-// Function to check user's answer
-function checkAnswer(selectedAnswer, correctAnswer) {
-    const responseDiv = document.getElementById("response");
-    if (selectedAnswer === correctAnswer) {
-        responseDiv.innerHTML += `<p style="color: green;"><strong>Correct!</strong> The answer is ${correctAnswer}.</p>`;
-    } else {
-        responseDiv.innerHTML += `<p style="color: red;"><strong>Incorrect!</strong> The correct answer was...not that</p>`;
-    }
-}
+        // Disable the submit button after answering
+        submitButton.disabled = true;
+
+        // Fetch a new trivia question after a delay
+        setTimeout(() => {
+            resultElem.textContent = ""; // Clear previous result
+            fetchTrivia();
+        }, 3000); // 3-second delay before fetching the next question
+    });
+
+    // Fetch the first trivia question when the page loads
+    fetchTrivia();
+});
