@@ -3,32 +3,46 @@ async function sendMessage() {
     const responseDiv = document.getElementById("response");
 
     try {
-        // Send a GET request to the Spring Boot API
-        const res = await fetch(`http://localhost:8080/chat?message=${encodeURIComponent(message)}`);
+        let res;
+        let data;
 
-        if (!res.ok) {
-            responseDiv.innerHTML = `<p style="color: red;">Error: ${res.statusText}</p>`;
-            return;
-        }
+        if (message.toLowerCase().includes("trivia")) {
+            // Fetch trivia question when user mentions "trivia"
+            res = await fetch(`http://localhost:8080/sportsTrivia`);
+            data = await res.json();
 
-        // Parse JSON response
-        const data = await res.json();
+            if (data.question) {
+                const question = data.question;
+                const answers = data.answers || [];
+                const correctAnswer = data.correctAnswer;
 
-        // Extract the list of choices
-        const choices = data.Choices;
-
-        if (choices && choices.length > 0) {
-            // Extract the content of the first choice
-            const firstChoiceMessage = choices[0]?.message?.content || "No message content";
-
-            responseDiv.innerHTML = `
-                <p><strong>Response:</strong> ${firstChoiceMessage}</p>
-            `;
+                // Display the trivia question and options
+                responseDiv.innerHTML = `<p><strong>Trivia Question:</strong> ${question}</p>`;
+                answers.forEach((answer, index) => {
+                    responseDiv.innerHTML += `<button onclick="checkAnswer('${answer}', '${correctAnswer}')">${answer}</button>`;
+                });
+            } else {
+                responseDiv.innerHTML = `<p>No trivia available. Try again later.</p>`;
+            }
         } else {
-            responseDiv.innerHTML = `<p>No valid response from API.</p>`;
+            // Otherwise, call the regular chat API
+            res = await fetch(`http://localhost:8080/chat?message=${encodeURIComponent(message)}`);
+            data = await res.json();
+            const responseMessage = data.message || "No valid response from the system.";
+            responseDiv.innerHTML = `<p><strong>Response:</strong> ${responseMessage}</p>`;
         }
     } catch (error) {
         console.error("Error:", error);
         responseDiv.innerHTML = `<p style="color: red;">An error occurred: ${error.message}</p>`;
+    }
+}
+
+// Function to check user's answer
+function checkAnswer(selectedAnswer, correctAnswer) {
+    const responseDiv = document.getElementById("response");
+    if (selectedAnswer === correctAnswer) {
+        responseDiv.innerHTML += `<p style="color: green;"><strong>Correct!</strong> The answer is ${correctAnswer}.</p>`;
+    } else {
+        responseDiv.innerHTML += `<p style="color: red;"><strong>Incorrect!</strong> The correct answer was...not that</p>`;
     }
 }

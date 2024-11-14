@@ -2,15 +2,14 @@ package com.example.chatgptus.controller;
 
 
 import com.example.chatgptus.dto.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 
 @RestController
 public class ChatGPTController {
@@ -38,7 +37,7 @@ public class ChatGPTController {
 
         ChatResponse response = webClient.post()
                 .contentType(MediaType.APPLICATION_JSON)
-                .headers(h -> h.setBearerAuth("NotTheRealKey"))
+                .headers(h -> h.setBearerAuth(""))
                 .bodyValue(chatRequest)
                 .retrieve()
                 .bodyToMono(ChatResponse.class)
@@ -56,35 +55,57 @@ public class ChatGPTController {
 
     }
 
+    @GetMapping("/sportsTrivia")
+    public Map<String, Object> getSportsTrivia() {
+        String triviaApiUrl = "https://opentdb.com/api.php?amount=1&category=21&type=multiple";
 
-    @GetMapping("/chat1")
-    public List<Choice> chatWithGPT1(@RequestParam String message) {
-        ChatRequest chatRequest = new ChatRequest();
-        chatRequest.setModel("gpt-3.5-turbo"); // Forsk. modeller - vi vælger den gamle 3.5
-        List<Message> lstMessages = new ArrayList<>();
-        lstMessages.add(new Message("system", "You are a helpful assistant."));
-        lstMessages.add(new Message("user", "Where is " + message));
-        chatRequest.setMessages(lstMessages);
-        chatRequest.setN(1); //n er antal svar der bliver givet fra ChatGPT i pp sat til 3 her til 1
-        chatRequest.setTemperature(1); //jo højere jo mere fantasifuldt svar mellem 0-2 default value 1
-        chatRequest.setMaxTokens(30); //længde af svar
-        chatRequest.setStream(false); //false = en besked bliver sendt true = flere beskeder bliver sendt fra ChatGPT
-        chatRequest.setPresencePenalty(1); //Jo lavere jo mindre gentagelse af allerede givet information -2.0 til 2.0 def value 0
+        WebClient webClient = WebClient.create();
+        Map<String, Object> responseMap = new HashMap<>();
 
-        ChatResponse response = webClient.post()
-                .contentType(MediaType.APPLICATION_JSON)
-                .headers(h-> h.setBearerAuth("NotTheRealKey"))
-                .bodyValue(chatRequest)
-                .retrieve()
-                .bodyToMono(ChatResponse.class)
-                .block();
+        try {
+            // Fetch trivia data from the API
+            String triviaResponse = webClient.get()
+                    .uri(triviaApiUrl)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
 
-        List<Choice> lst = response.getChoices();
-        var obj = response.getUsage();
+            // Convert JSON response to a Map
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Object> triviaData = objectMapper.readValue(triviaResponse, Map.class);
 
-        return lst;
+            // Extract the trivia question and options
+            List<Map<String, Object>> results = (List<Map<String, Object>>) triviaData.get("results");
+            if (results != null && !results.isEmpty()) {
+                Map<String, Object> trivia = results.get(0);
 
+                String question = (String) trivia.get("question");
+                List<String> incorrectAnswers = (List<String>) trivia.get("incorrect_answers");
+                String correctAnswer = (String) trivia.get("correct_answer");
+
+                // Combine correct and incorrect answers
+                List<String> allAnswers = new ArrayList<>(incorrectAnswers);
+                allAnswers.add(correctAnswer);
+                Collections.shuffle(allAnswers);
+
+                // Prepare response
+                responseMap.put("question", question);
+                responseMap.put("answers", allAnswers);
+                responseMap.put("correctAnswer", correctAnswer);
+            } else {
+                responseMap.put("message", "No trivia found. Try again later.");
+            }
+        } catch (Exception e) {
+            responseMap.put("error", "Failed to fetch trivia: " + e.getMessage());
+        }
+
+        return responseMap;
     }
+
+
+
+
+
 
 
 }
