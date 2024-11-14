@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trivia Game</title>
-    <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
-<h1>Trivia Game</h1>
 <div id="trivia-container">
-    <p id="question"></p>
-    <div id="choices-container"></div>
-    <button id="submit-btn" disabled>Submit Answer</button>
+    <h2 id="question"></h2>
+    <ul id="choices"></ul>
+    <button onclick="submitAnswer()">Submit Answer</button>
     <p id="result"></p>
+
+    <!-- Next Button to load the next question -->
+    <button onclick="loadNextQuestion()">Next Question</button>
 </div>
 
-<!-- Link to your JavaScript file -->
-<script src="../frontJS/script.js"></script>
+<script src="../frontJS/script.js"></script> <!-- Link to your JavaScript file -->
 </body>
 </html>

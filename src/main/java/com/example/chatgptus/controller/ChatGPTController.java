@@ -35,56 +35,55 @@ public class ChatGPTController {
         System.out.println("Received category: " + category);
 
         try {
-            // Fetch trivia question based on category
-            Map<String, Object> triviaResponse = getTriviaQuestion(category);  // This returns a Map
+            // Step 1: Fetch trivia question from Open Trivia API
+            Map<String, Object> triviaResponse = getTriviaQuestion(category);
             if (triviaResponse.containsKey("error")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(triviaResponse);  // Return the error message if present
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(triviaResponse);
             }
 
-            String trivia = (String) triviaResponse.get("question");  // Get the question from the Map
-            if (trivia == null || trivia.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Collections.singletonMap("error", "Trivia question not found"));
-            }
-            System.out.println("Fetched Trivia: " + trivia);
+            String question = (String) triviaResponse.get("question");
+            String correctAnswer = (String) triviaResponse.get("correct_answer");
 
-            // Process the trivia question with GPT
+            // Step 2: Use ChatGPT to generate multiple-choice options
             ChatRequest chatRequest = new ChatRequest();
             chatRequest.setModel("gpt-3.5-turbo");
 
-            List<Message> lstMessages = new ArrayList<>();
-            lstMessages.add(new Message("system", "You are a helpful assistant."));
-            lstMessages.add(new Message("user", "Give me 4 multiple choice answers for the following question: " + trivia));
-            chatRequest.setMessages(lstMessages);
-            chatRequest.setN(1);  // We only need one response
-            chatRequest.setTemperature(1);  // Set reasonable randomness
-            chatRequest.setMaxTokens(100);  // Limit the response length
+            List<Message> messages = new ArrayList<>();
+            messages.add(new Message("system", "You are a quiz generator assistant."));
+            messages.add(new Message("user", "Generate 4 multiple-choice answers for the following trivia question. "
+                    + "Make sure one of the options is the correct answer."
+                    + "\nQuestion: " + question + "\nCorrect answer: " + correctAnswer));
 
-            // Call GPT-3 to generate the multiple choices
-            ChatResponse response = webClient.post()
+            chatRequest.setMessages(messages);
+            chatRequest.setN(1);
+            chatRequest.setTemperature(1);
+            chatRequest.setMaxTokens(150);
+
+            // Call ChatGPT to get the multiple-choice options
+            ChatResponse aiResponse = webClient.post()
                     .contentType(MediaType.APPLICATION_JSON)
-                    .headers(h -> h.setBearerAuth("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"))  // Use your OpenAI token here
+                    .headers(headers -> headers.setBearerAuth("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"))
                     .bodyValue(chatRequest)
                     .retrieve()
                     .bodyToMono(ChatResponse.class)
                     .block();
 
-            if (response == null || response.getChoices() == null || response.getChoices().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.singletonMap("error", "Failed to generate choices"));
+            if (aiResponse == null || aiResponse.getChoices().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.singletonMap("error", "Failed to generate AI multiple-choice options"));
             }
 
-            // Extract the choices from the response
-            List<Choice> choices = response.getChoices();
-            List<String> answerChoices = new ArrayList<>();
-            for (Choice choice : choices) {
-                // Assuming ChatGPT provides text options for choices
-                answerChoices.add(choice.getMessage().getContent().trim());
-            }
+            // Step 3: Extract the generated options from ChatGPT response
+            String aiGeneratedChoices = aiResponse.getChoices().get(0).getMessage().getContent().trim();
 
-            // Return the question and choices
+            // Split the generated choices into an array (assuming they are separated by newlines or commas)
+            String[] choicesArray = aiGeneratedChoices.split("\n|,");  // Split by either newline or comma
+
+            // Prepare the result to send back to the frontend
             Map<String, Object> result = new HashMap<>();
-            result.put("question", trivia);
-            result.put("correct_answer", answerChoices.get(0));  // Assuming the first answer is correct
-            result.put("incorrect_answers", answerChoices.subList(1, answerChoices.size()));  // Other answers are incorrect
+            result.put("question", question);
+            result.put("choices", Arrays.asList(choicesArray));  // Return the choices as an array
+
+            System.out.println("AI-generated trivia data sent to client: " + result);
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
@@ -96,10 +95,10 @@ public class ChatGPTController {
     // Method to get the trivia question based on category
     public Map<String, Object> getTriviaQuestion(String category) {
         int retries = 5;
-        int delay = 2000;
+        int delay = 4000;
 
-        // Use category ID for sports: 21
-        String triviaApiUrl = "https://opentdb.com/api.php?amount=1&type=multiple&category=21";
+        // Adjust triviaApiUrl to use the category from the request
+        String triviaApiUrl = "https://opentdb.com/api.php?amount=1&type=multiple&category=" + category;
         System.out.println("Calling Trivia API: " + triviaApiUrl);
 
         while (retries > 0) {
@@ -118,41 +117,22 @@ public class ChatGPTController {
                     JSONObject questionData = jsonResponse.getJSONArray("results").getJSONObject(0);
                     String question = questionData.getString("question");
                     String correctAnswer = questionData.getString("correct_answer");
-                    List<String> incorrectAnswers = new ArrayList<>();
-                    questionData.getJSONArray("incorrect_answers").forEach(ans -> incorrectAnswers.add(ans.toString()));
-
-                    List<String> allAnswers = new ArrayList<>(incorrectAnswers);
-                    allAnswers.add(correctAnswer);
-                    Collections.shuffle(allAnswers);
 
                     Map<String, Object> result = new HashMap<>();
                     result.put("question", question);
                     result.put("correct_answer", correctAnswer);
-                    result.put("answers", allAnswers);
 
-                    System.out.println("Sending trivia data to client: " + result);
                     return result;
                 } else {
-                    System.err.println("Error: Invalid response code from trivia API: " + responseCode);
                     return Collections.singletonMap("error", "Invalid trivia category or request");
                 }
 
-            } catch (WebClientResponseException.TooManyRequests e) {
-                System.err.println("Received 429 Too Many Requests. Retrying in " + delay + " ms...");
-                retries--;
-                try {
-                    Thread.sleep(delay);
-                } catch (InterruptedException interruptedException) {
-                    Thread.currentThread().interrupt();
-                }
-                delay *= 2;
             } catch (Exception e) {
                 e.printStackTrace();
                 return Collections.singletonMap("error", "Error fetching trivia question");
             }
         }
 
-        System.err.println("Max retries reached. Returning error response.");
         return Collections.singletonMap("error", "Max retries reached. Try again later.");
     }
 }
