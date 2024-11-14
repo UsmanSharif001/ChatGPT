@@ -62,7 +62,6 @@ public class ChatGPTController {
             // Call ChatGPT to get the multiple-choice options
             ChatResponse aiResponse = webClient.post()
                     .contentType(MediaType.APPLICATION_JSON)
-                    //SetKEYs
                     .bodyValue(chatRequest)
                     .retrieve()
                     .bodyToMono(ChatResponse.class)
