@@ -62,7 +62,7 @@ public class ChatGPTController {
             // Call ChatGPT to get the multiple-choice options
             ChatResponse aiResponse = webClient.post()
                     .contentType(MediaType.APPLICATION_JSON)
-                    .headers(headers -> headers.setBearerAuth("StillNotTheRealKey"))
+                    .headers(headers -> headers.setBearerAuth("NotTheRealKey"))
                     .bodyValue(chatRequest)
                     .retrieve()
                     .bodyToMono(ChatResponse.class)
@@ -95,7 +95,7 @@ public class ChatGPTController {
     // Method to get the trivia question based on category
     public Map<String, Object> getTriviaQuestion(String category) {
         int retries = 5;
-        int delay = 2000;
+        int delay = 4000;
 
         // Adjust triviaApiUrl to use the category from the request
         String triviaApiUrl = "https://opentdb.com/api.php?amount=1&type=multiple&category=" + category;
