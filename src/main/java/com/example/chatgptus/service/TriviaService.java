@@ -1,4 +1,5 @@
-package com.example.chatgptus;
+package com.example.chatgptus.service;
+import com.example.chatgptus.dto.TriviaQuestion;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 

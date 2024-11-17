@@ -1,4 +1,4 @@
-package com.example.chatgptus;
+package com.example.chatgptus.model;
 
 import java.util.List;
 

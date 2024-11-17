@@ -62,7 +62,7 @@ public class ChatGPTController {
             // Call ChatGPT to get the multiple-choice options
             ChatResponse aiResponse = webClient.post()
                     .contentType(MediaType.APPLICATION_JSON)
-                    .headers(headers -> headers.setBearerAuth("NotRealKey"))
+                    .headers(headers -> headers.setBearerAuth("keykeykeky"))
                     .bodyValue(chatRequest)
                     .retrieve()
                     .bodyToMono(ChatResponse.class)
@@ -76,12 +76,12 @@ public class ChatGPTController {
             String aiGeneratedChoices = aiResponse.getChoices().get(0).getMessage().getContent().trim();
 
             // Split the generated choices into an array (assuming they are separated by newlines or commas)
-            String[] choicesArray = aiGeneratedChoices.split("\n|,");  // Split by either newline or comma
+            String[] choicesArray = aiGeneratedChoices.split("\n|,");  // Split on newline
 
             // Prepare the result to send back to the frontend
             Map<String, Object> result = new HashMap<>();
             result.put("question", question);
-            result.put("choices", Arrays.asList(choicesArray));  // Return the choices as an array
+            result.put("choices", Arrays.asList(choicesArray));
 
             System.out.println("AI-generated trivia data sent to client: " + result);
             return ResponseEntity.ok(result);
@@ -92,7 +92,7 @@ public class ChatGPTController {
         }
     }
 
-    // Method to get the trivia question based on category
+
     public Map<String, Object> getTriviaQuestion(String category) {
         int retries = 5;
         int delay = 4000;
@@ -129,7 +129,7 @@ public class ChatGPTController {
 
             } catch (Exception e) {
                 e.printStackTrace();
-                return Collections.singletonMap("error", "Error fetching trivia question");
+                return Collections.singletonMap("error", "Please wait a couple of seconds before next question");
             }
         }
 
