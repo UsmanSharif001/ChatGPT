@@ -1,28 +1,24 @@
 package com.example.chatgptus.service;
-import com.example.chatgptus.dto.TriviaQuestion;
+
+import com.example.chatgptus.repository.TriviaRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.Map;
 
 @Service
 public class TriviaService {
-    private final WebClient webClient;
 
-    public TriviaService(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl("https://opentdb.com").build();
+    private final TriviaRepository triviaRepository;
+
+    @Autowired
+    public TriviaService(TriviaRepository triviaRepository) {
+        this.triviaRepository = triviaRepository;
     }
 
-    public String getTriviaQuestion() {
-        String triviaApiUrl = "/api.php?amount=1&category=21&type=multiple";
-        TriviaQuestion triviaQuestion = webClient.get()
-                .uri(triviaApiUrl)
-                .retrieve()
-                .bodyToMono(TriviaQuestion.class)
-                .block();
-
-        if (triviaQuestion != null && !triviaQuestion.getResults().isEmpty()) {
-            TriviaQuestion.Result result = triviaQuestion.getResults().get(0);
-            return result.getQuestion() + "\nOptions: " + result.getIncorrect_answers() + "\nCorrect Answer: " + result.getCorrect_answer();
-        }
-        return "No trivia question available";
+    public Map<String, Object> getTrivia(String category) {
+        return triviaRepository.getTriviaQuestion(category);
     }
+
+
 }

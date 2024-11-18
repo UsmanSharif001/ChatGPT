@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/styles.css">
     <title>Trivia Game</title>
 </head>
 <body>
@@ -12,7 +13,19 @@
     <button onclick="submitAnswer()">Submit Answer</button>
     <p id="result"></p>
 
-    <button onclick="loadNextQuestion()">Next Question</button>
+    <select id="categorySelect">
+        <option value="21">Sports</option>
+        <option value="9">General Knowledge</option>
+        <option value="18">Computers</option>
+        <option value="11">Entertainment: Video Games</option>
+        <option value="17">Science: Computers</option>
+        <option value="23">History</option>
+        <option value="22">Geography</option>
+        <option value="19">Science: Gadgets</option>
+        <option value="10">Entertainment: Books</option>
+    </select>
+
+    <button   onclick="changeCategory()">Category Changer</button>
 </div>
 
 <script src="../frontJS/script.js"></script>

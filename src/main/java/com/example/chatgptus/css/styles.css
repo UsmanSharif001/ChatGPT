@@ -1,22 +1,72 @@
 body {
     font-family: Arial, sans-serif;
-    margin: 20px;
-    padding: 20px;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }
 
 #trivia-container {
-    margin-top: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 400px;
+    text-align: center;
+}
+
+h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+li {
+    margin: 10px 0;
 }
 
 button {
-    margin-top: 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+    text-align: left;
 }
 
-label {
-    margin-left: 10px;
+button:hover {
+    background-color: #45a049;
 }
 
 #result {
     margin-top: 20px;
-    font-weight: bold;
+    font-size: 18px;
 }
+
+#choices {
+    list-style-type: none; /* Removes the default bullet points */
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column; /* Stack answers vertically */
+    text-align: left; /* Align text to the left */
+}
+
+#choices li {
+    margin: 10px 0; /* Adds space between each answer option */
+    font-size: 16px;
+}
+
+input[type="radio"] {
+    margin-right: 10px; /* Adds space between the radio button and label */
+}
+
